@@ -1,14 +1,27 @@
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
+import { MainModule } from './main.module';
+import * as cookieParser from 'cookie-parser';
+import { ConfigService } from './modules/config/config.service';
+import { ValidationPipe } from '@nestjs/common';
+import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(MainModule);
 
-  //  默认所有网关以 /api 开头
-  app.setGlobalPrefix('/api');
+  const GLOBAL_PREFIX = '/api/node';
+  app.setGlobalPrefix(GLOBAL_PREFIX);
 
-  await app.listen(8080);
+  app.use(cookieParser());
 
+  // response
+  app.useGlobalInterceptors(new ResponseInterceptor());
+
+  // 参数校验及转换为对象
+  app.useGlobalPipes(new ValidationPipe());
+
+  const configService = app.get(ConfigService);
+  const port = process.env.PORT || configService.get('port');
+  await app.listen(port);
   const logo = `
                         (
                         )     (
@@ -17,10 +30,10 @@ async function bootstrap() {
        .-'\`\`'|-._             )         _.-|
       /  .--.|   \`""---...........---""\`   |
      /  /    |                             |
-     | |     |                             |
-      \\ \\    |                             |
-       \\ \\   |                             |
-             | James gateway is run on http://localhost:8080/
+     |  |    |                             |
+      \\  \\   |                             |
+       \\ \\   |                             | 
+       listening on: http://localhost:${port}${GLOBAL_PREFIX}/health-check 
          \\ \\ |                             |
          _/ /\                             /
         (__/  \                           /
@@ -36,4 +49,8 @@ async function bootstrap() {
   `;
   console.log(logo);
 }
-bootstrap();
+
+(async () => {
+  // 启动主应用接口监听
+  await bootstrap();
+})();
