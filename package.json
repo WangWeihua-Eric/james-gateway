@@ -6,7 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "pm2": "nest build && pm2 start --name node dist/src/main",
+    "pm2": "git pull && yarn && nest build && pm2 delete all && pm2 start --name node dist/src/main.js",
     "build": "nest build",
     "start": "nest start --watch",
     "start:prod": "node dist/src/main"
